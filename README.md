@@ -34,18 +34,13 @@ The SQL staging totals reconcile to the source dataset.
 
 ## Current progress
 
-### Data Audit
+### SQL Data Audit
 
-Completed checks for:
+Completed checks for missing Customer ID, negative quantities, cancellations / returns, operational adjustments, zero and negative prices, bad-debt adjustments and exact duplicates.
 
-- Missing Customer ID
-- Negative Quantity
-- Cancellation / return transactions
-- Inventory / operational adjustments
-- Zero and negative Price
-- Bad-debt adjustments
-- Exact duplicates
-- Transaction classification using `CASE WHEN`
+The audit also uses `CASE WHEN` to classify transactions as Sale, Cancellation, Adjustment or Other and reconciles the classification back to the source row count.
+
+See [`sql/01_data_audit.sql`](sql/01_data_audit.sql) and [`docs/01_data_audit.md`](docs/01_data_audit.md).
 
 ### Power Query
 
@@ -58,6 +53,7 @@ Implemented:
 - `SalesAnalysisFlag`
 - Exact duplicate removal
 - SQL-to-Power Query reconciliation
+- Date-only `TransactionDate`
 
 The 2010–2011 cleaned transaction table contains **536,642 rows**, reconciling to:
 
@@ -65,7 +61,9 @@ The 2010–2011 cleaned transaction table contains **536,642 rows**, reconciling
 
 ### Power BI / DAX
 
-Initial measures include:
+The current model contains a dedicated `dim_date` date table and an active one-to-many relationship to the cleaned transaction fact table.
+
+Measures currently include:
 
 - Gross Sales
 - Return Amount
@@ -77,33 +75,38 @@ Initial measures include:
 - MoM Net Sales Growth %
 - Orders per Customer
 
-A date dimension (`dim_date`) has also been created and related to the cleaned transaction fact table.
+Current KPI results are approximately **£10.63M Gross Sales**, **-£893.98K Return Amount** and **£9.74M Net Sales**.
 
-## Initial insight
+The working Power BI file is available in this repository as [`Customer_360_Retention_Analytics.pbix`](Customer_360_Retention_Analytics.pbix).
 
-From August to November 2011, net sales increased from approximately **£692K to £1.46M**. The increase was primarily volume- and engagement-driven: orders rose from **1,280 to 2,657**, active customers from **935 to 1,664**, and orders per customer from **1.37 to 1.60**, while AOV declined slightly from about **£583 to £566**.
+Detailed modelling, DAX and analysis notes are documented in [`docs/02_power_bi_analysis.md`](docs/02_power_bi_analysis.md).
 
-This suggests that late-year growth was driven by a larger and more active customer base rather than higher basket values.
+## Insight #1 — Late-year sales acceleration
+
+From August to November 2011, net sales increased from approximately **£692K to £1.46M**. Orders rose from **1,280 to 2,657**, active customers from **935 to 1,664**, and orders per customer from **1.37 to 1.60**, while AOV declined slightly from about **£583 to £566**.
+
+**The Aug–Nov sales acceleration was primarily volume- and engagement-driven rather than basket-value-driven.**
+
+The analysis intentionally avoids attributing this pattern to a specific cause such as Christmas demand without additional evidence.
 
 ## Repository structure
 
 ```text
 customer-360-retention-analytics/
 ├── README.md
+├── Customer_360_Retention_Analytics.pbix
 ├── sql/
 │   └── 01_data_audit.sql
-├── docs/
-│   └── 01_data_audit.md
-└── powerbi/
-    └── (Power BI files and screenshots will be added later)
+└── docs/
+    ├── 01_data_audit.md
+    └── 02_power_bi_analysis.md
 ```
 
 ## Next steps
 
-- Finish cleaned analytical table logic in SQL
-- Standardise InvoiceDate handling
-- Define formal KPI business rules
+- Align KPI analytical populations and finalise AOV definition
 - Build Customer 360 dashboard pages
-- Add segmentation / RFM
+- Add customer segmentation / RFM
 - Add retention analysis
-- Document final business recommendations
+- Add dashboard screenshots for recruiter-friendly preview
+- Develop additional business insights and recommendations
