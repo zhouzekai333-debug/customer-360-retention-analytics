@@ -149,7 +149,9 @@ Net Sales =
 [Gross Sales] + [Return Amount]
 ```
 
-### Orders
+### Customer Orders
+
+The original `Orders` measure is retained for customer-level behaviour analysis and uses the customer-analysis population:
 
 ```DAX
 Orders =
@@ -158,6 +160,8 @@ CALCULATE(
     fact_transactions_clean[CustomerAnalysisFlag] = "Include"
 )
 ```
+
+Conceptually this is treated as **Customer Orders** in the Customer 360 layer.
 
 ### Customers
 
@@ -169,17 +173,30 @@ CALCULATE(
 )
 ```
 
-### Average Order Value
+### Sales Orders
+
+A separate sales-order denominator was added so Gross Sales and AOV use the same analytical population:
 
 ```DAX
-AOV =
-DIVIDE(
-    [Gross Sales],
-    [Orders]
+Sales Orders =
+CALCULATE(
+    DISTINCTCOUNT(fact_transactions_clean[Invoice]),
+    fact_transactions_clean[TransactionType] = "Sale",
+    fact_transactions_clean[SalesAnalysisFlag] = "Include"
 )
 ```
 
-> **Model refinement note:** the current Gross Sales measure uses the sales-analysis population while Orders uses the customer-analysis population. Before the final dashboard is published, the denominator and numerator populations will be aligned so that AOV has a fully consistent business definition.
+### Sales AOV
+
+```DAX
+Sales AOV =
+DIVIDE(
+    [Gross Sales],
+    [Sales Orders]
+)
+```
+
+This resolves the earlier population mismatch between Gross Sales and the customer-analysis `Orders` measure.
 
 ### Previous Month Net Sales
 
@@ -218,9 +235,9 @@ Current model results are approximately:
 - Gross Sales: £10.63M
 - Return Amount: -£893.98K
 - Net Sales: £9.74M
-- Orders: ~19K
+- Sales Orders: ~20K
 - Customers: ~4K
-- AOV: £573.66
+- **Sales AOV: £532.65**
 
 The Power BI Return Amount differs slightly from the SQL staging cancellation amount (-£896,812.49) because the Power BI measure is calculated **after exact duplicate removal**. This is an expected pre-clean vs post-clean reconciliation difference.
 
