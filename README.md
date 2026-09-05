@@ -140,6 +140,20 @@ Lifecycle status is kept separate from RFM segment:
 
 This distinction led to renaming the earlier `New / Potential` RFM label to **Recent / Developing** after QA showed that 108 of those 252 customers were actually Returning from the prior year.
 
+### Day 6 — SQL JOIN applied to lifecycle analysis
+
+JOIN practice was applied directly to the project at customer grain rather than on raw transaction rows:
+
+- `INNER JOIN` identifies customers present in both annual periods → Returning
+- `LEFT JOIN` from 2010–2011 to 2009–2010 plus `IS NULL` identifies New customers
+- Reversing the `LEFT JOIN` direction identifies Lapsed customers
+- `CASE WHEN` converts match status into `LifecycleStatus`
+- Multi-column `GROUP BY` supports lifecycle-by-segment analysis once the customer segment output is materialised
+
+The annual customer sets are deduplicated with `SELECT DISTINCT [Customer ID]` before joining to avoid transaction-level many-to-many row multiplication.
+
+See [`sql/03_customer_lifecycle_joins.sql`](sql/03_customer_lifecycle_joins.sql).
+
 ## Validation status
 
 Passed:
@@ -150,10 +164,11 @@ Passed:
 - Customer population SQL ↔ Power BI: **4,338**
 - Previous-year valid customer count SQL ↔ Power BI: **4,312**
 
-Open QA item:
+Open QA items:
 
 - SQL currently shows Champions 780 / Loyal 671, while Power BI shows Champions 778 / Loyal 673. All other segments and the total customer population match. The two-customer discrepancy is being retained for root-cause analysis rather than forcing the outputs to match.
-- Final Power BI LifecycleStatus count reconciliation is pending after correcting an accidental post-segmentation filter.
+- Final Power BI LifecycleStatus count reconciliation is still pending after correcting an accidental post-segmentation filter.
+- Power Query refresh performance is now a documented blocker: refreshing `dim_customer_rfm` from the 1.73 GB Excel source repeatedly re-evaluated the upstream query chain, reaching approximately **26.4 GB of processed data after about one hour** before cancellation. QA and staging queries were removed from model load where appropriate, but the customer-dimension dependency chain still requires ETL / refresh-architecture optimisation before further Power BI QA.
 
 ## Repository structure
 
@@ -163,7 +178,8 @@ customer-360-retention-analytics/
 ├── Customer_360_Retention_Analytics.pbix
 ├── sql/
 │   ├── 01_data_audit.sql
-│   └── 02_customer_rfm_segmentation.sql
+│   ├── 02_customer_rfm_segmentation.sql
+│   └── 03_customer_lifecycle_joins.sql
 └── docs/
     ├── 01_data_audit.md
     ├── 02_power_bi_analysis.md
@@ -172,6 +188,7 @@ customer-360-retention-analytics/
 
 ## Next steps
 
+- Optimise the Power Query / ETL refresh architecture before further customer-dimension refreshes
 - Reconcile the two-customer Champions / Loyal difference
 - Confirm Power BI lifecycle counts: Returning 2,772 / New 1,566
 - Document root cause and final reconciliation result
