@@ -14,7 +14,11 @@ Build an end-to-end customer analytics workflow covering:
 - Sales and customer behaviour analysis
 - RFM segmentation
 - Cross-year customer lifecycle analysis
-- Business insight generation and CRM decision support
+- CRM prioritisation and decision support
+
+The recruiter-facing decision question is:
+
+> Which customers should CRM prioritise for protection, re-engagement, win-back, nurture, or low-cost monitoring based on observed behaviour, value, and lifecycle status?
 
 ## Dataset
 
@@ -33,7 +37,7 @@ Row-count reconciliation:
 
 The SQL staging totals reconcile to the source dataset.
 
-The project currently uses **2010–2011 as the main behavioural analysis period** and **2009–2010 as a historical lookback** for cross-year lifecycle status.
+The project uses **2010–2011 as the main behavioural analysis period** and **2009–2010 as a historical lookback** for cross-year lifecycle status.
 
 ## Current progress
 
@@ -57,13 +61,12 @@ Implemented:
 - Exact duplicate removal
 - SQL-to-Power Query reconciliation
 - Date-only `TransactionDate`
-- Customer-level `dim_customer_rfm`
-- Historical-customer lookup `dim_previous_year_customers`
-- Lifecycle merge logic
 
 The 2010–2011 cleaned transaction table contains **536,642 rows**, reconciling to:
 
 `541,910 source rows - 5,268 duplicate rows = 536,642 cleaned rows`
+
+A previous Power Query customer-dimension dependency chain was retained as a documented performance lesson because it repeatedly re-evaluated the 1.73 GB upstream source. The recruiter-facing Day 7 retention page therefore uses a lightweight SQL-derived customer dimension instead of rerunning that slow chain.
 
 ### Power BI / DAX
 
@@ -82,7 +85,17 @@ Measures include:
 - MoM Net Sales Growth %
 - Orders per Customer
 
-Current KPI results are approximately **£10.63M Gross Sales**, **-£893.98K Return Amount**, **£9.74M Net Sales** and **£532.65 Sales AOV**.
+Current sales KPI results are approximately **£10.63M Gross Sales**, **-£893.98K Return Amount**, **£9.74M Net Sales** and **£532.65 Sales AOV**.
+
+The Day 7 retention layer loads a SQL-derived **4,338-row** customer-grain table as `dim_customer_action`, containing LifecycleStatus, RFM segment, Recency, Orders, Revenue, ActionGroup and RecommendedAction.
+
+Current retention-page QA:
+
+- CRM Customers: **4,338**
+- CRM Revenue: **£8.91M**
+- Re-engage Customers: **81**
+- Re-engage Revenue: **£228.14K**
+- Protect & Grow Revenue Share: **75.6%**
 
 The working Power BI file is available as [`Customer_360_Retention_Analytics.pbix`](Customer_360_Retention_Analytics.pbix).
 
@@ -115,12 +128,6 @@ The segment design translates current customer behaviour and value into CRM prio
 
 See [`sql/02_customer_rfm_segmentation.sql`](sql/02_customer_rfm_segmentation.sql) and [`docs/03_rfm_segmentation_retention.md`](docs/03_rfm_segmentation_retention.md).
 
-## Insight #2 — Customer value and retention priority
-
-**Champions and Loyal Customers represent 33.5% of customers but account for 75.6% of historical revenue.** By contrast, Low Priority customers represent 30.2% of customers but only 4.2% of revenue.
-
-The smaller At Risk group represents 1.9% of customers and shows meaningful historical value, with approximately **£2.8K average revenue**, **4.8 orders per customer** and **202 days average recency**. This makes the group a focused reactivation opportunity, not evidence of confirmed churn.
-
 ## Cross-year lifecycle analysis
 
 Using the same valid-purchase customer definition in both annual periods:
@@ -131,7 +138,7 @@ Using the same valid-purchase customer definition in both annual periods:
 - New in 2010–2011: **1,566**
 - Lapsed after 2009–2010: **1,540**
 
-This gives a **64.3% cross-year continuation proxy** for Year-1 customers. It is intentionally not labelled as a formal churn/retention rate because customer cohort entry timing and observation windows have not yet been modelled.
+This gives a **64.3% cross-year continuation proxy** for Year-1 customers. It is intentionally not labelled as a formal churn/retention rate because customer cohort entry timing and observation windows have not been modelled.
 
 Lifecycle status is kept separate from RFM segment:
 
@@ -140,7 +147,7 @@ Lifecycle status is kept separate from RFM segment:
 
 This distinction led to renaming the earlier `New / Potential` RFM label to **Recent / Developing** after QA showed that 108 of those 252 customers were actually Returning from the prior year.
 
-### Day 6 — SQL JOIN applied to lifecycle analysis
+### SQL JOIN applied to lifecycle analysis
 
 JOIN practice was applied directly to the project at customer grain rather than on raw transaction rows:
 
@@ -148,27 +155,66 @@ JOIN practice was applied directly to the project at customer grain rather than 
 - `LEFT JOIN` from 2010–2011 to 2009–2010 plus `IS NULL` identifies New customers
 - Reversing the `LEFT JOIN` direction identifies Lapsed customers
 - `CASE WHEN` converts match status into `LifecycleStatus`
-- Multi-column `GROUP BY` supports lifecycle-by-segment analysis once the customer segment output is materialised
 
 The annual customer sets are deduplicated with `SELECT DISTINCT [Customer ID]` before joining to avoid transaction-level many-to-many row multiplication.
 
 See [`sql/03_customer_lifecycle_joins.sql`](sql/03_customer_lifecycle_joins.sql).
 
-## Validation status
+## Retention & CRM decision logic
 
-Passed:
+RFM segment and LifecycleStatus are combined into five actionable CRM treatment groups:
 
-- Source row reconciliation
-- Transaction classification SQL ↔ Power Query
-- Exact-duplicate row reconciliation
-- Customer population SQL ↔ Power BI: **4,338**
-- Previous-year valid customer count SQL ↔ Power BI: **4,312**
+- **Protect & Grow** — Champions and Loyal Customers
+- **Re-engage Now** — At Risk customers
+- **Retention / Win-back** — Returning customers in Needs Attention
+- **Nurture Next Purchase** — New customers in Needs Attention plus Recent / Developing customers
+- **Low-cost Monitor** — Low Priority customers
 
-Open QA items:
+A lifecycle × segment sanity check exposed **19 New + At Risk** customers. Because `New` only means absent from the prior-year dataset rather than newly acquired, the initial rule was revised so **all At Risk customers are classified as Re-engage Now**.
 
-- SQL currently shows Champions 780 / Loyal 671, while Power BI shows Champions 778 / Loyal 673. All other segments and the total customer population match. The two-customer discrepancy is being retained for root-cause analysis rather than forcing the outputs to match.
-- Final Power BI LifecycleStatus count reconciliation is still pending after correcting an accidental post-segmentation filter.
-- Power Query refresh performance is now a documented blocker: refreshing `dim_customer_rfm` from the 1.73 GB Excel source repeatedly re-evaluated the upstream query chain, reaching approximately **26.4 GB of processed data after about one hour** before cancellation. QA and staging queries were removed from model load where appropriate, but the customer-dimension dependency chain still requires ETL / refresh-architecture optimisation before further Power BI QA.
+Final action-group results:
+
+| Action Group | Customers | Customer Share | Revenue | Revenue Share | Avg Recency Days |
+|---|---:|---:|---:|---:|---:|
+| Protect & Grow | 1,451 | 33.4% | £6,736,600.09 | 75.6% | 17.9 |
+| Retention / Win-back | 798 | 18.4% | £1,071,386.25 | 12.0% | 88.9 |
+| Nurture Next Purchase | 700 | 16.1% | £496,824.24 | 5.6% | 53.4 |
+| Low-cost Monitor | 1,308 | 30.2% | £378,473.75 | 4.2% | 193.4 |
+| Re-engage Now | 81 | 1.9% | £228,141.57 | 2.6% | 202.3 |
+
+See [`sql/04_retention_crm_action_logic.sql`](sql/04_retention_crm_action_logic.sql) and [`docs/04_retention_crm_actions.md`](docs/04_retention_crm_actions.md).
+
+## Key CRM insights
+
+1. **Protect & Grow** represents 33.4% of customers but contributes **75.6% of customer revenue**, highlighting a concentrated core value base to protect and expand.
+2. **Re-engage Now** contains only **81 customers**, but represents approximately **£228K in historical revenue** and an average inactivity period of **202 days**, making it a focused high-value win-back opportunity.
+3. **Low-cost Monitor** represents **30.2% of customers but only 4.2% of revenue**, supporting lower-cost automated CRM treatment rather than intensive retention investment.
+
+## Validation & reconciliation status
+
+Current recruiter-facing analysis path:
+
+- Source row reconciliation: **PASS**
+- Transaction classification SQL ↔ Power Query: **PASS**
+- Exact-duplicate row reconciliation: **PASS**
+- Customer population SQL ↔ Power BI: **4,338 = PASS**
+- Previous-year valid customer count: **4,312 = PASS**
+- Lifecycle counts: **New 1,566 / Returning 2,772 = PASS**
+- Current RFM segment counts: **Champions 780 / Loyal 671 / Needs Attention 1,246 / Low Priority 1,308 / At Risk 81 / Recent-Developing 252 = PASS**
+- Day 7 CRM action-group customer totals: **4,338 = PASS**
+- Day 7 customer-share total: **100% = PASS**
+- Day 7 revenue-share total: **100% = PASS**
+- Day 7 Power BI KPI QA: **4,338 customers / £8.91M revenue / 81 re-engage / £228.14K re-engage revenue / 75.6% Protect & Grow revenue share = PASS**
+
+### Historical Power Query discrepancy
+
+An earlier Power Query implementation of `dim_customer_rfm` showed Champions **778** / Loyal **673**, while SQL showed Champions **780** / Loyal **671**. The total population still matched at 4,338. The exact root cause of that legacy two-customer split was not proven before the upstream refresh chain became a performance blocker.
+
+For the current recruiter-facing retention page, this legacy path is **not used**. The page uses the validated SQL customer-grain output loaded as `dim_customer_action`, and its segment, lifecycle, CRM-group and KPI counts reconcile to the SQL source. The old mismatch is retained in the documentation as historical technical debt rather than being silently overwritten or presented as resolved without evidence.
+
+## Limitation
+
+`LifecycleStatus` is a cross-year purchase-presence proxy, not a confirmed churn label. The dataset does not include explicit churn outcomes, campaign exposure, acquisition dates, demographics, or cohort-normalised observation windows. Recommendations therefore represent **retention / re-engagement prioritisation**, not measured campaign outcomes or causal churn modelling.
 
 ## Repository structure
 
@@ -179,19 +225,19 @@ customer-360-retention-analytics/
 ├── sql/
 │   ├── 01_data_audit.sql
 │   ├── 02_customer_rfm_segmentation.sql
-│   └── 03_customer_lifecycle_joins.sql
+│   ├── 03_customer_lifecycle_joins.sql
+│   └── 04_retention_crm_action_logic.sql
 └── docs/
     ├── 01_data_audit.md
     ├── 02_power_bi_analysis.md
-    └── 03_rfm_segmentation_retention.md
+    ├── 03_rfm_segmentation_retention.md
+    └── 04_retention_crm_actions.md
 ```
 
 ## Next steps
 
-- Optimise the Power Query / ETL refresh architecture before further customer-dimension refreshes
-- Reconcile the two-customer Champions / Loyal difference
-- Confirm Power BI lifecycle counts: Returning 2,772 / New 1,566
-- Document root cause and final reconciliation result
-- Build recruiter-facing Customer Segmentation / Retention dashboard page
-- Add dashboard screenshots for a recruiter-friendly preview
-- Continue retention and decision-logic analysis
+- Add recruiter-facing dashboard screenshots to the README
+- Sync the latest Power BI file after final visual polish
+- Run the portfolio reproduction / interview-ownership test
+- Conduct cohort analysis if a more appropriate observation design is added
+- Build predictive churn modelling only if explicit churn labels become available
