@@ -19,7 +19,7 @@ Customer-level RFM uses valid positive purchase transactions:
 - `Quantity > 0`
 - `Price > 0`
 
-The 2010–2011 customer population contains **4,338 customers**, matching the Power BI customer population.
+The 2010–2011 customer population contains **4,338 customers**, matching the current Power BI customer population.
 
 ## SQLite date standardisation
 
@@ -138,41 +138,80 @@ Derived cross-year indicators:
 
 These are treated as **cross-year continuation / lapse proxies**, not a formal churn rate, because cohort entry timing and observation windows have not yet been modelled.
 
-## Power BI implementation status
+## Power BI implementation and reconciliation status
 
-A referenced `dim_customer_rfm` query has been created from `fact_transactions_clean` with:
+### Historical Power Query path
 
-- Revenue
-- Distinct Orders
-- LastPurchaseDate
-- RecencyDays
-- R_Score
-- F_Score
-- M_Score
-- CustomerSegment
-- LifecycleStatus merge logic using `dim_previous_year_customers`
-
-Historical-customer Power Query QA reconciled to SQL at **4,312 unique valid customers**.
-
-### Open reconciliation item
-
-Power BI currently shows:
+An earlier referenced `dim_customer_rfm` Power Query implementation produced:
 
 - Champions: **778**
 - Loyal Customers: **673**
 
-while the current SQL staging-based segmentation shows:
+while the staging-based SQL segmentation produced:
 
 - Champions: **780**
 - Loyal Customers: **671**
 
-All other segment counts match and the total population remains **4,338**. This two-customer discrepancy is intentionally left open for root-cause analysis rather than forcing the outputs to match. A likely area to test is the difference between staging-based SQL aggregation and Power BI aggregation after exact-duplicate removal.
+All other segment counts and the total population matched at **4,338**. The exact root cause of this legacy two-customer split was not proven before the 1.73 GB upstream Power Query dependency chain became a refresh-performance blocker.
 
-Power BI lifecycle count QA is also pending final refresh after removal of an accidental post-segmentation filter.
+This discrepancy is retained here as historical technical debt. It is **not** silently relabelled as solved.
 
-## Next QA steps
+### Current recruiter-facing retention path
 
-1. Reconcile the two-customer Champions / Loyal difference.
-2. Confirm Power BI lifecycle counts equal Returning 2,772 and New 1,566.
-3. Document the root cause and correction.
-4. Build the recruiter-facing segmentation / retention dashboard page only after reconciliation passes.
+For the current Day 7 Retention & CRM Actions page, the legacy `dim_customer_rfm` path is not used. The validated SQL customer-grain output is exported as a lightweight **4,338-row CSV** and loaded into Power BI as `dim_customer_action`.
+
+The current customer-level fields include:
+
+- Customer ID
+- LifecycleStatus
+- CustomerSegment
+- RecencyDays
+- Orders
+- Revenue
+- ActionGroup
+- RecommendedAction
+
+Current Power BI reconciliation matches SQL for the recruiter-facing retention analysis:
+
+- Total customers: **4,338**
+- New: **1,566**
+- Returning: **2,772**
+- Champions: **780**
+- Loyal Customers: **671**
+- Needs Attention: **1,246**
+- Low Priority: **1,308**
+- At Risk: **81**
+- Recent / Developing: **252**
+
+The lifecycle × segment matrix also reconciles to the same 4,338-customer total.
+
+The current report-page KPIs reconcile to SQL:
+
+- CRM Customers: **4,338**
+- CRM Revenue: **£8.91M**
+- Re-engage Customers: **81**
+- Re-engage Revenue: **£228.14K**
+- Protect & Grow Revenue Share: **75.6%**
+
+This distinction matters for evidence integrity: the project documents the old unresolved path while using the reconciled SQL-derived path for the current dashboard.
+
+## Retention decision layer
+
+The next analytical layer combines RFM Segment with LifecycleStatus to create actionable CRM treatment groups and validates them with a lifecycle × segment sanity check.
+
+See:
+
+- [`../sql/04_retention_crm_action_logic.sql`](../sql/04_retention_crm_action_logic.sql)
+- [`04_retention_crm_actions.md`](04_retention_crm_actions.md)
+
+## Limitation
+
+Lifecycle status is based on observed purchase presence across two annual periods. It should therefore be interpreted as a behavioural continuation / lapse proxy rather than confirmed churn. The dataset does not contain explicit churn labels, acquisition dates, campaign exposure, demographics, or cohort-normalised observation windows.
+
+## Current QA status
+
+1. SQL RFM segment totals: **PASS**.
+2. Current SQL-derived Power BI retention dimension: **PASS**.
+3. Lifecycle counts New 1,566 / Returning 2,772: **PASS**.
+4. Current retention-page KPI reconciliation: **PASS**.
+5. Legacy Power Query RFM 778/673 vs SQL 780/671 split: **documented historical technical debt; not used in the current recruiter-facing path**.
