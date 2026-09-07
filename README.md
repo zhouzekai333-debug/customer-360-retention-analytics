@@ -15,6 +15,7 @@ Build an end-to-end customer analytics workflow covering:
 - RFM segmentation
 - Cross-year customer lifecycle analysis
 - CRM prioritisation and decision support
+- Customer value concentration analysis
 
 The recruiter-facing decision question is:
 
@@ -84,6 +85,13 @@ Measures include:
 - Previous Month Net Sales
 - MoM Net Sales Growth %
 - Orders per Customer
+- Customer Value Revenue
+- Protect & Grow Revenue
+- Protect & Grow Revenue Share
+- Top 10% Customer Revenue
+- Top 10% Customers
+- Top 10% Revenue Share
+- Cumulative Revenue Share
 
 Current sales KPI results are approximately **£10.63M Gross Sales**, **-£893.98K Return Amount**, **£9.74M Net Sales** and **£532.65 Sales AOV**.
 
@@ -96,6 +104,8 @@ Current retention-page QA:
 - Re-engage Customers: **81**
 - Re-engage Revenue: **£228.14K**
 - Protect & Grow Revenue Share: **75.6%**
+
+The Day 8 Customer Value page adds DAX-based value concentration analysis using `TOPN`, `CALCULATE`, `ALL`, `DIVIDE`, variables and a disconnected threshold table. The key Top 10% checkpoint independently reproduces the SQL result at **434 customers / £5.47M / 61.4% revenue share**.
 
 The working Power BI file is available as [`Customer_360_Retention_Analytics.pbix`](Customer_360_Retention_Analytics.pbix).
 
@@ -184,11 +194,41 @@ Final action-group results:
 
 See [`sql/04_retention_crm_action_logic.sql`](sql/04_retention_crm_action_logic.sql) and [`docs/04_retention_crm_actions.md`](docs/04_retention_crm_actions.md).
 
+## Customer value concentration
+
+Customer-level revenue was ranked using SQL window functions to assess how concentrated commercial value is across the customer base.
+
+Cumulative revenue concentration:
+
+| Customer Group | Customers | Revenue | Revenue Share |
+|---|---:|---:|---:|
+| Top 1% | 43 | £2,831,634.13 | 31.8% |
+| Top 5% | 217 | £4,489,400.21 | 50.4% |
+| Top 10% | 434 | £5,469,382.46 | 61.4% |
+| Top 20% | 868 | £6,649,437.46 | 74.6% |
+| All Customers | 4,338 | £8,911,425.90 | 100.0% |
+
+The analysis shows substantial customer-value concentration: the top 5% of customers contribute more than half of customer revenue, while the top 20% contribute 74.6%.
+
+This supports differentiated CRM investment, with stronger retention, loyalty and growth treatment for high-value customers rather than applying equal treatment across the full customer base.
+
+The result was independently reproduced in Power BI using DAX `TOPN`, `CALCULATE`, `ALL`, `DIVIDE` and variable-based measures.
+
+SQL and DAX results reconcile at the key Top 10% checkpoint:
+
+- Top 10% customers: **434**
+- Top 10% revenue: **£5.47M**
+- Top 10% revenue share: **61.4%**
+- SQL ↔ Power BI: **PASS**
+
+See [`sql/05_customer_value_concentration.sql`](sql/05_customer_value_concentration.sql).
+
 ## Key CRM insights
 
 1. **Protect & Grow** represents 33.4% of customers but contributes **75.6% of customer revenue**, highlighting a concentrated core value base to protect and expand.
 2. **Re-engage Now** contains only **81 customers**, but represents approximately **£228K in historical revenue** and an average inactivity period of **202 days**, making it a focused high-value win-back opportunity.
 3. **Low-cost Monitor** represents **30.2% of customers but only 4.2% of revenue**, supporting lower-cost automated CRM treatment rather than intensive retention investment.
+4. **Top 5% customers contribute 50.4% of customer revenue**, reinforcing the need for differentiated CRM investment toward high-value customers.
 
 ## Validation & reconciliation status
 
@@ -205,6 +245,7 @@ Current recruiter-facing analysis path:
 - Day 7 customer-share total: **100% = PASS**
 - Day 7 revenue-share total: **100% = PASS**
 - Day 7 Power BI KPI QA: **4,338 customers / £8.91M revenue / 81 re-engage / £228.14K re-engage revenue / 75.6% Protect & Grow revenue share = PASS**
+- Day 8 Top 10% SQL ↔ Power BI QA: **434 customers / £5.47M / 61.4% revenue share = PASS**
 
 ### Historical Power Query discrepancy
 
@@ -226,7 +267,8 @@ customer-360-retention-analytics/
 │   ├── 01_data_audit.sql
 │   ├── 02_customer_rfm_segmentation.sql
 │   ├── 03_customer_lifecycle_joins.sql
-│   └── 04_retention_crm_action_logic.sql
+│   ├── 04_retention_crm_action_logic.sql
+│   └── 05_customer_value_concentration.sql
 └── docs/
     ├── 01_data_audit.md
     ├── 02_power_bi_analysis.md
