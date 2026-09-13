@@ -139,6 +139,8 @@ Customer 360 defence, telecom project business story, cross-project question sel
 
 Revenue decline, pricing, customer migration and CRM/retention cases.
 
+**Day 17 Excel execution layer:** add one lightweight business-style Excel exercise to the revenue/pricing case. Practise only interview-relevant operations such as XLOOKUP/VLOOKUP, SUMIFS, IF, PivotTables, margin calculation and simple scenario comparison. This is not a new portfolio project; it is an execution layer for Commercial / Sales Ops / Revenue Ops interview readiness.
+
 ### Days 21–24 — Interview conversion
 
 Recruiter/behavioural, technical/project, hiring-manager and full end-to-end mocks.
