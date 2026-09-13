@@ -82,3 +82,81 @@ Completed three short technical-English transfer exercises:
 - Diagnose 3/3 major query errors: **PASS**
 
 **Day 10 complete. Next effective study day should start from the current Notion Stage II plan after a progress preflight.**
+
+
+## Day 11 — Window Functions for Analysts
+
+**Date:** 2026-09-13  
+**Status:** IN PROGRESS — core SQL passed, day not yet closed
+
+### Completed today
+
+- Understood the difference between `GROUP BY` and window functions:
+  - `GROUP BY` changes the output grain by collapsing rows.
+  - Window functions preserve row-level detail while calculating within a defined window.
+- Learned how to interpret:
+  - `OVER(...)`
+  - `PARTITION BY`
+  - window `ORDER BY`
+- Learned the behavioural difference between:
+  - `ROW_NUMBER()`
+  - `RANK()`
+  - `DENSE_RANK()`
+- Independently solved Top-N-within-segment logic using `ROW_NUMBER()`.
+- Independently wrote `LAG()` logic for previous-period comparison.
+- Independently wrote a running total using `SUM(...) OVER (...)`.
+- Combined aggregation and window functions:
+  - aggregate transaction-level data to the required grain first,
+  - then apply ranking or period-over-period logic at that grain.
+- Completed mixed business cases across:
+  - Customer / CRM analytics,
+  - revenue analysis,
+  - employee / People Analytics headcount.
+- Correctly identified that business definitions matter for measures such as monthly headcount vs month-end headcount.
+
+### Evidence of independent recall
+
+The session progressed from guided fill-in questions to blank-page SQL. Independent attempts successfully reconstructed the main logic for:
+
+- customer purchase amount vs previous purchase using `LAG()`,
+- country monthly revenue vs previous month,
+- running revenue by country,
+- customer revenue ranking within country,
+- employee revenue ranking within department,
+- department monthly headcount change.
+
+### Current strengths
+
+- Correctly identifies the grouping / analytical grain before applying a window function.
+- Understands when `PARTITION BY` is required.
+- Can distinguish Top-N, previous-period and running-total use cases.
+- Increasing ability to combine CTEs, `GROUP BY`, and window functions without a supplied template.
+
+### Reinforcement needed
+
+Blank-page syntax accuracy is still the main weakness:
+
+- missing commas,
+- missing `()` after `ROW_NUMBER`,
+- missing commas between CTEs,
+- occasional missing `DESC`,
+- occasional schema-name mismatch,
+- incomplete `OVER (...)` clauses.
+
+Use the final check before submitting SQL:
+
+**commas → parentheses → aliases → ASC/DESC → final filter → schema names**
+
+### Remaining before Day 11 can be marked Done
+
+The original Notion plan requires:
+
+- 2 `ROW_NUMBER` reps,
+- 2 `RANK/DENSE_RANK` reps,
+- 2 `LAG/SUM OVER` reps,
+- 1 mixed business case,
+- and the Exit Gate: ≥6/7 correct plus clear explanation of `PARTITION BY` / `ORDER BY`.
+
+Most of the gate is met, including independent Top-N and period-over-period logic. However, the session did not cleanly complete all planned `RANK/DENSE_RANK` coding reps, and the planned 30–45 second English transfer answer on **Window Function vs GROUP BY** was not completed.
+
+**Do not advance to Day 12 until these short Day 11 close-out items are completed and recorded.**
