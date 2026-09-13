@@ -87,7 +87,7 @@ Completed three short technical-English transfer exercises:
 ## Day 11 — Window Functions for Analysts
 
 **Date:** 2026-09-13  
-**Status:** IN PROGRESS — core SQL passed, day not yet closed
+**Status:** PASS — Day 11 complete
 
 ### Completed today
 
@@ -147,16 +147,20 @@ Use the final check before submitting SQL:
 
 **commas → parentheses → aliases → ASC/DESC → final filter → schema names**
 
-### Remaining before Day 11 can be marked Done
+### Day 11 close-out
 
-The original Notion plan requires:
+The remaining close-out items were completed later on 2026-09-13:
 
-- 2 `ROW_NUMBER` reps,
-- 2 `RANK/DENSE_RANK` reps,
-- 2 `LAG/SUM OVER` reps,
-- 1 mixed business case,
-- and the Exit Gate: ≥6/7 correct plus clear explanation of `PARTITION BY` / `ORDER BY`.
+- `RANK()` blank-page rep: **Pass** — correctly used for tied values with skipped ranks.
+- `DENSE_RANK()` blank-page rep: **Pass** — correctly used for tied values without skipped ranks.
+- English transfer: **Pass** — clearly explained that window functions preserve row-level detail while `GROUP BY` collapses rows, with examples covering ranking, running totals and period-over-period comparison.
 
-Most of the gate is met, including independent Top-N and period-over-period logic. However, the session did not cleanly complete all planned `RANK/DENSE_RANK` coding reps, and the planned 30–45 second English transfer answer on **Window Function vs GROUP BY** was not completed.
+### Exit gate result
 
-**Do not advance to Day 12 until these short Day 11 close-out items are completed and recorded.**
+- Required window-function reps: **PASS**
+- Independently solve Top-N by segment: **PASS**
+- Independently solve period-over-period comparison: **PASS**
+- Explain `PARTITION BY` / `ORDER BY`: **PASS**
+- Interview English transfer: **PASS**
+
+**Day 11 complete. Next effective study day begins with the Notion progress preflight for Day 12.**
