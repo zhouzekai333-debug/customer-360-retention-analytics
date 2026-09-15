@@ -178,6 +178,14 @@ The remaining close-out items were completed later on 2026-09-13:
 - Improved full-query execution: the top-N-by-month case was solved correctly apart from minor syntax fixes.
 - The two-layer country/customer aggregation pattern still needs reinforcement.
 
+### Reconciliation work completed today
+
+- Reviewed the SQL ↔ Power BI reconciliation logic for Customer 360.
+- Confirmed the current recruiter-facing SQL-derived path is reconciled at the customer/KPI checkpoints, including the 4,338-customer population.
+- Revisited the historical Power Query RFM split: Champions 778 / Loyal 673 vs SQL Champions 780 / Loyal 671.
+- Kept the evidence boundary explicit: the legacy two-customer split has no proven root cause, is documented as historical technical debt, and is not used in the current recruiter-facing dashboard.
+- Therefore Day 13 should not repeat a root-cause repair attempt on that legacy path; the remaining work is project defence and explaining the reconciliation clearly.
+
 ### Day 12 gate status
 
 - Day 10 remains complete.
