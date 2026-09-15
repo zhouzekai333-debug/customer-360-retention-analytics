@@ -164,3 +164,29 @@ The remaining close-out items were completed later on 2026-09-13:
 - Interview English transfer: **PASS**
 
 **Day 11 complete. Next effective study day begins with the Notion progress preflight for Day 12.**
+
+
+## 2026-09-15 — Progress checkpoint (not an effective study-day completion)
+
+**Current Stage II status:** Day 12 — Technical Interview Simulation I remains **In progress**.
+
+### What was checked
+
+- Day 10 remains complete.
+- Day 11 remains complete.
+- Day 12 exit gate has **not** been cleared.
+- No additional Day 12 carry-over SQL reps were completed on 2026-09-15.
+- Job-search/application work took priority today, so the study plan does not advance to Day 13.
+
+### Required carry-over before Day 13
+
+Complete **3 fresh full-SQL questions** using the explicit sequence:
+
+1. grain,
+2. aggregation,
+3. JOIN/window,
+4. filter.
+
+Target: **>=75% with no major logic error**.
+
+Only after that carry-over is passed should the plan move to Day 13 — Customer 360 Reconciliation Repair + Defence I.
